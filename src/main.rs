@@ -1,7 +1,11 @@
 mod db_connection;
 mod todo_list;
+mod schema;
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use crate::db_connection::establish_connection;
+use self::todo_list::*;
+use diesel::prelude::*;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -15,6 +19,20 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    use self::schema::to_do_list::dsl::*;
+
+        let connection = &mut establish_connection();
+        let results = to_do_list
+            .limit(5)
+            .select(TodoListEntity::as_select())
+            .load(connection)
+            .expect("Error loading todo list");
+
+        println!("Displaying {} todo list", results.len());
+        for todolist in results {
+            println!("{}", todolist.title);
+        }
+
     HttpServer::new(|| {
         App::new()
             .service(hello)
