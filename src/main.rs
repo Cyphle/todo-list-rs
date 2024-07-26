@@ -1,3 +1,6 @@
+mod db_connection;
+mod todo_list;
+
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 
 #[get("/")]
@@ -17,9 +20,9 @@ async fn main() -> std::io::Result<()> {
             .service(hello)
             .service(echo)
     })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }
 
 
@@ -47,11 +50,11 @@ mod tests {
         assert!(resp.status().is_success());
     }
 
-        #[actix_web::test]
-        async fn test_echo_post_error() {
-            let app = test::init_service(App::new().service(echo)).await;
-            let req = test::TestRequest::post().uri("/").to_request();
-            let resp = test::call_service(&app, req).await;
-            assert!(resp.status().is_client_error());
-        }
+    #[actix_web::test]
+    async fn test_echo_post_error() {
+        let app = test::init_service(App::new().service(echo)).await;
+        let req = test::TestRequest::post().uri("/").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_client_error());
+    }
 }

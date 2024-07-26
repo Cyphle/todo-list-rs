@@ -1,0 +1,14 @@
+version: '2'
+services:
+  documentstorage-postgresql:
+    image: postgres:16.3
+    environment:
+      POSTGRES_DB: todolist
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - todolistpgdata:/var/lib/postgresql/data
+volumes:
+  todolistpgdata:
