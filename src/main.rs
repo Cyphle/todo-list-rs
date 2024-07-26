@@ -19,10 +19,10 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    use self::schema::to_do_list::dsl::*;
+    use self::schema::todo_list::dsl::*;
 
         let connection = &mut establish_connection();
-        let results = to_do_list
+        let results = todo_list
             .limit(5)
             .select(TodoListEntity::as_select())
             .load(connection)
