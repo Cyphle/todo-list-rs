@@ -1,11 +1,11 @@
 mod db_connection;
-mod todo_list;
 mod schema;
+mod todo_list;
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use crate::db_connection::establish_connection;
-use self::todo_list::*;
 use diesel::prelude::*;
+use self::todo_list::*;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -19,19 +19,23 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    use self::schema::todo_list::dsl::*;
+    use self::schema::todo_lists::dsl::*;
 
-        let connection = &mut establish_connection();
-        let results = todo_list
-            .limit(5)
-            .select(TodoListEntity::as_select())
-            .load(connection)
-            .expect("Error loading todo list");
+    let connection = &mut establish_connection();
 
-        println!("Displaying {} todo list", results.len());
-        for todolist in results {
-            println!("{}", todolist.title);
-        }
+    create_todo_list(connection, "My first todo list");
+
+    let results = todo_lists
+        .limit(5)
+        .select(TodoList::as_select())
+        .load(connection)
+        .expect("Error loading posts");
+
+    println!("Displaying {} todo lists", results.len());
+    for post in results {
+        println!("{}", post.title.unwrap());
+        println!("-----------\n");
+    }
 
     HttpServer::new(|| {
         App::new()
@@ -42,7 +46,6 @@ async fn main() -> std::io::Result<()> {
         .run()
         .await
 }
-
 
 #[cfg(test)]
 mod tests {
