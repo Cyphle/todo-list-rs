@@ -1,5 +1,6 @@
 use diesel::prelude::*;
 use crate::schema::todo_lists;
+use crate::todo_list_item::TodoListItem;
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = crate::schema::todo_lists)]

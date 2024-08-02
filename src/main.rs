@@ -1,6 +1,7 @@
 mod db_connection;
 mod schema;
 mod todo_list;
+mod todo_list_item;
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use crate::db_connection::establish_connection;
