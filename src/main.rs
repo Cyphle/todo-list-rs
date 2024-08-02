@@ -3,9 +3,10 @@ mod schema;
 mod todo_list;
 mod todo_list_item;
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use crate::db_connection::establish_connection;
 use diesel::prelude::*;
+use crate::todo_list_item::{create_todo_list_item, TodoListItem};
 use self::todo_list::*;
 
 #[get("/")]
@@ -24,19 +25,45 @@ async fn main() -> std::io::Result<()> {
 
     let connection = &mut establish_connection();
 
-    create_todo_list(connection, "My first todo list");
+    let todo_list = create_todo_list(connection, "We need more productivity");
 
-    let results = todo_lists
+    let item : String = String::from("Write more code");
+
+    create_todo_list_item(connection, &item, &todo_list.id);
+
+    let todo_lists_result = todo_lists
         .limit(5)
         .select(TodoList::as_select())
         .load(connection)
         .expect("Error loading posts");
 
+    //let todo_lists = todo_lists::table.select(TodoList::as_select()).load(connection)?;
+
+    let items_results = TodoListItem::belonging_to(&todo_lists_result)
+        .select(TodoListItem::as_select())
+        .load(connection)?;
+
+    // get items for a list
+    let items_per_list = items_results
+        .grouped_by(&todo_lists_result)
+        .into_iter()
+        .zip(todo_lists_result)
+        .map(|(items, list)| (list, items))
+        .collect::<Vec<(TodoList, Vec<TodoListItem>)>>();
+
+    println!("Pages per book: \n {items_per_list:?}\n");
+
+    /*println!("Displaying {} todo list items", items_results.len());
+    for post in items_results {
+        println!("{}", post.content.unwrap());
+        println!("-----------\n");
+    }
+
     println!("Displaying {} todo lists", results.len());
     for post in results {
         println!("{}", post.title.unwrap());
         println!("-----------\n");
-    }
+    }*/
 
     HttpServer::new(|| {
         App::new()
