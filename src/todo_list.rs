@@ -1,8 +1,8 @@
 use diesel::prelude::*;
 use crate::schema::todo_lists;
 
-#[derive(Queryable, Selectable, Debug, PartialEq)]
-#[diesel(table_name = crate::schema::todo_lists)]
+#[derive(Queryable, Identifiable, Selectable, Debug, PartialEq)]
+#[diesel(table_name = todo_lists)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct TodoList {
     pub id: i32,

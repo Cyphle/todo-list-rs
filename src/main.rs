@@ -1,13 +1,17 @@
+use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
+use diesel::prelude::*;
+
+extern crate diesel;
+
+use crate::db_connection::establish_connection;
+use crate::schema::todo_lists::dsl::todo_lists;
+use crate::todo_list_item::*;
+use crate::todo_list::*;
+
 mod db_connection;
 mod schema;
 mod todo_list;
 mod todo_list_item;
-
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
-use crate::db_connection::establish_connection;
-use diesel::prelude::*;
-use crate::todo_list_item::{create_todo_list_item, TodoListItem};
-use self::todo_list::*;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -21,7 +25,6 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    use self::schema::todo_lists::dsl::*;
 
     let connection = &mut establish_connection();
 
@@ -37,11 +40,10 @@ async fn main() -> std::io::Result<()> {
         .load(connection)
         .expect("Error loading posts");
 
-    //let todo_lists = todo_lists::table.select(TodoList::as_select()).load(connection)?;
-
     let items_results = TodoListItem::belonging_to(&todo_lists_result)
         .select(TodoListItem::as_select())
-        .load(connection)?;
+        .load(connection)
+        .expect("Error loading posts");
 
     // get items for a list
     let items_per_list = items_results
@@ -52,18 +54,6 @@ async fn main() -> std::io::Result<()> {
         .collect::<Vec<(TodoList, Vec<TodoListItem>)>>();
 
     println!("Pages per book: \n {items_per_list:?}\n");
-
-    /*println!("Displaying {} todo list items", items_results.len());
-    for post in items_results {
-        println!("{}", post.content.unwrap());
-        println!("-----------\n");
-    }
-
-    println!("Displaying {} todo lists", results.len());
-    for post in results {
-        println!("{}", post.title.unwrap());
-        println!("-----------\n");
-    }*/
 
     HttpServer::new(|| {
         App::new()
@@ -77,7 +67,7 @@ async fn main() -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{http::header::ContentType, test, App};
+    use actix_web::{App, http::header::ContentType, test};
 
     use super::*;
 
