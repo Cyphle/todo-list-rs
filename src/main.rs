@@ -1,11 +1,13 @@
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
-use sea_orm::{Database, DatabaseConnection, DbErr, EntityTrait};
-use entity::todo_lists;
+use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr, EntityTrait};
+use sea_orm::ActiveValue::Set;
 
+use entity::todo_lists;
+use entity::todo_lists::{Entity as TodoLists, Model};
 use migration::{Migrator, MigratorTrait};
+use serde_json::json;
 
 use crate::db_connection::establish_connection;
-use entity::todo_lists::{Entity as TodoLists, Model};
 
 mod db_connection;
 
@@ -28,6 +30,17 @@ async fn main() -> std::io::Result<()> {
     println!("Bonjour");
     match db {
         Ok(db_connection) => {
+            // Insert
+            // let created = todo_lists::ActiveModel::from_json(json!({
+            //     "title": "Hello world"
+            // }));
+            let temp_list = todo_lists::ActiveModel {
+                title: Set("My list".to_owned()),
+                ..Default::default() // all other attributes are `NotSet`
+            };
+            let my_ilist = temp_list.insert(&db_connection).await;
+
+            // Read
             // Migrator::up(&connection, None).await?; To launch from code see https://www.sea-ql.org/SeaORM/docs/migration/running-migration/
             let todo_list = TodoLists::find_by_id(1).one(&db_connection).await;
             match todo_list {
