@@ -3,4 +3,5 @@
 pub mod prelude;
 
 pub mod post;
+pub mod todo_list_items;
 pub mod todo_lists;
