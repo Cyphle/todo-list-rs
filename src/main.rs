@@ -1,6 +1,7 @@
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
 
 use diesel::prelude::*;
+use migration::{Migrator, MigratorTrait};
 
 use crate::db_connection::establish_connection;
 
@@ -23,7 +24,7 @@ async fn echo(req_body: String) -> impl Responder {
 async fn main() -> std::io::Result<()> {
     // SEA ORM
     let connection = establish_connection();
-
+    Migrator::up(&connection, None).await?;
 
     // ACTIX
     HttpServer::new(|| {
