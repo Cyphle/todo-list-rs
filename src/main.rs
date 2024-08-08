@@ -1,13 +1,13 @@
-mod db_connection;
-mod schema;
-mod todo_list;
-mod todo_list_item;
+use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
+use sea_orm::{Database, DatabaseConnection, DbErr, EntityTrait};
+use entity::todo_lists;
 
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use migration::{Migrator, MigratorTrait};
+
 use crate::db_connection::establish_connection;
-use diesel::prelude::*;
-use crate::todo_list_item::{create_todo_list_item, TodoListItem};
-use self::todo_list::*;
+use entity::todo_lists::{Entity as TodoLists, Model};
+
+mod db_connection;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -21,50 +21,36 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    use self::schema::todo_lists::dsl::*;
+    // SEA ORM
+    // let connection = establish_connection();
+    let db = Database::connect("postgres://postgres:postgres@localhost:5434/todolist").await;
 
-    let connection = &mut establish_connection();
-
-    let todo_list = create_todo_list(connection, "We need more productivity");
-
-    let item : String = String::from("Write more code");
-
-    create_todo_list_item(connection, &item, &todo_list.id);
-
-    let todo_lists_result = todo_lists
-        .limit(5)
-        .select(TodoList::as_select())
-        .load(connection)
-        .expect("Error loading posts");
-
-    //let todo_lists = todo_lists::table.select(TodoList::as_select()).load(connection)?;
-
-    let items_results = TodoListItem::belonging_to(&todo_lists_result)
-        .select(TodoListItem::as_select())
-        .load(connection)?;
-
-    // get items for a list
-    let items_per_list = items_results
-        .grouped_by(&todo_lists_result)
-        .into_iter()
-        .zip(todo_lists_result)
-        .map(|(items, list)| (list, items))
-        .collect::<Vec<(TodoList, Vec<TodoListItem>)>>();
-
-    println!("Pages per book: \n {items_per_list:?}\n");
-
-    /*println!("Displaying {} todo list items", items_results.len());
-    for post in items_results {
-        println!("{}", post.content.unwrap());
-        println!("-----------\n");
+    println!("Bonjour");
+    match db {
+        Ok(db_connection) => {
+            // Migrator::up(&connection, None).await?; To launch from code see https://www.sea-ql.org/SeaORM/docs/migration/running-migration/
+            let todo_list = TodoLists::find_by_id(1).one(&db_connection).await;
+            match todo_list {
+                Ok(result) => {
+                    match result {
+                        None => {
+                            println!("No result found")
+                        }
+                        Some(res) => {
+                            println!("{:?}", res);
+                        }
+                    }
+                }
+                Err(error) => {
+                    panic!("{:?}", error);
+                }
+            }
+        }
+        Err(_) => {}
     }
+    println!("Au revoir");
 
-    println!("Displaying {} todo lists", results.len());
-    for post in results {
-        println!("{}", post.title.unwrap());
-        println!("-----------\n");
-    }*/
-
+    // ACTIX
     HttpServer::new(|| {
         App::new()
             .service(hello)
@@ -77,33 +63,42 @@ async fn main() -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{http::header::ContentType, test, App};
+    use actix_web::test;
 
     use super::*;
 
-    #[actix_web::test]
-    async fn test_hello_get() {
-        let app = test::init_service(App::new().service(hello)).await;
-        let req = test::TestRequest::default()
-            .insert_header(ContentType::plaintext())
-            .to_request();
-        let resp = test::call_service(&app, req).await;
-        assert!(resp.status().is_success());
+    mod actix_tests {
+        use actix_web::{App, test};
+        use actix_web::http::header::ContentType;
+
+        use crate::{echo, hello};
+
+        #[actix_web::test]
+        async fn test_hello_get() {
+            let app = test::init_service(App::new().service(hello)).await;
+            let req = test::TestRequest::default()
+                .insert_header(ContentType::plaintext())
+                .to_request();
+            let resp = test::call_service(&app, req).await;
+            assert!(resp.status().is_success());
+        }
+
+        #[actix_web::test]
+        async fn test_echo_post() {
+            let app = test::init_service(App::new().service(echo)).await;
+            let req = test::TestRequest::post().uri("/echo").to_request();
+            let resp = test::call_service(&app, req).await;
+            assert!(resp.status().is_success());
+        }
+
+        #[actix_web::test]
+        async fn test_echo_post_error() {
+            let app = test::init_service(App::new().service(echo)).await;
+            let req = test::TestRequest::post().uri("/").to_request();
+            let resp = test::call_service(&app, req).await;
+            assert!(resp.status().is_client_error());
+        }
     }
 
-    #[actix_web::test]
-    async fn test_echo_post() {
-        let app = test::init_service(App::new().service(echo)).await;
-        let req = test::TestRequest::post().uri("/echo").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert!(resp.status().is_success());
-    }
-
-    #[actix_web::test]
-    async fn test_echo_post_error() {
-        let app = test::init_service(App::new().service(echo)).await;
-        let req = test::TestRequest::post().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert!(resp.status().is_client_error());
-    }
+    // TODO tests SeaORM
 }
