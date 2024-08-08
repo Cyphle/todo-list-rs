@@ -1,11 +1,20 @@
 use std::env;
-use diesel::{Connection, PgConnection};
-use dotenvy::dotenv;
+use std::time::Duration;
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
-pub fn establish_connection() -> PgConnection {
-    dotenv().ok();
+pub async fn establish_connection() -> DatabaseConnection {
+    let mut opt = ConnectOptions::new("postgres://postgres:postgres@localhost:5434/todolist");
+    opt.max_connections(100)
+        .min_connections(5)
+        .connect_timeout(Duration::from_secs(8))
+        .acquire_timeout(Duration::from_secs(8))
+        .idle_timeout(Duration::from_secs(8))
+        .max_lifetime(Duration::from_secs(8))
+        .sqlx_logging(true)
+        .sqlx_logging_level(log::LevelFilter::Info)
+        .set_schema_search_path("public"); // Setting default PostgreSQL schema
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+    let db = Database::connect(opt).await?;
+
+    db
 }

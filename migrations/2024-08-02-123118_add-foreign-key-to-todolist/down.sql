@@ -1,1 +1,0 @@
-ALTER TABLE IF EXISTS todo_list_items DROP COLUMN IF EXISTS todo_list_id;
