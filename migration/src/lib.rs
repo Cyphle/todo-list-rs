@@ -2,6 +2,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20240808_132520_create_table;
 mod m20240808_142724_create_todo_list;
+mod m20240808_151647_create_todo_list_items;
 
 pub struct Migrator;
 
@@ -11,6 +12,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20240808_132520_create_table::Migration),
             Box::new(m20240808_142724_create_todo_list::Migration),
+            Box::new(m20240808_151647_create_todo_list_items::Migration),
         ]
     }
 }
