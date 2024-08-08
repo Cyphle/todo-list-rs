@@ -1,14 +1,13 @@
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
+use sea_orm::{Database, DatabaseConnection, DbErr, EntityTrait};
+use entity::todo_lists;
 
-use diesel::prelude::*;
 use migration::{Migrator, MigratorTrait};
 
 use crate::db_connection::establish_connection;
+use entity::todo_lists::{Entity as TodoLists, Model};
 
 mod db_connection;
-mod schema;
-mod todo_list;
-mod todo_list_item;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -23,8 +22,33 @@ async fn echo(req_body: String) -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // SEA ORM
-    let connection = establish_connection();
-    Migrator::up(&connection, None).await?;
+    // let connection = establish_connection();
+    let db = Database::connect("postgres://postgres:postgres@localhost:5434/todolist").await;
+
+    println!("Bonjour");
+    match db {
+        Ok(db_connection) => {
+            // Migrator::up(&connection, None).await?; To launch from code see https://www.sea-ql.org/SeaORM/docs/migration/running-migration/
+            let todo_list = TodoLists::find_by_id(1).one(&db_connection).await;
+            match todo_list {
+                Ok(result) => {
+                    match result {
+                        None => {
+                            println!("No result found")
+                        }
+                        Some(res) => {
+                            println!("{:?}", res);
+                        }
+                    }
+                }
+                Err(error) => {
+                    panic!("{:?}", error);
+                }
+            }
+        }
+        Err(_) => {}
+    }
+    println!("Au revoir");
 
     // ACTIX
     HttpServer::new(|| {
