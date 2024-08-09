@@ -3,7 +3,6 @@ pub use sea_orm_migration::prelude::*;
 mod m20240808_132520_create_table;
 mod m20240808_142724_create_todo_list;
 mod m20240808_151647_create_todo_list_items;
-mod setup;
 
 pub struct Migrator;
 
