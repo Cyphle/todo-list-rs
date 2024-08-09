@@ -1,4 +1,5 @@
 use sea_orm_migration::{prelude::*, schema::*};
+use crate::setup::{DOWN_SQL_DIR, execute_sql, read_sql_file, UP_SQL_DIR};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -8,31 +9,23 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        db.execute_unprepared(
-            "CREATE TABLE IF NOT EXISTS todo_list_items(
-                    id      SERIAL PRIMARY KEY,
-                    content TEXT
-                 );"
-        )
-            .await?;
+        let create_todo_list_items_sql = read_sql_file(format!("{}02-create-todo-list-items-table.sql", UP_SQL_DIR))?;
+        execute_sql(db, &create_todo_list_items_sql).await?;
 
-        db.execute_unprepared(
-            "ALTER TABLE IF EXISTS todo_list_items ADD COLUMN todo_list_id INTEGER NOT NULL REFERENCES todo_lists(id);"
-        )
-            .await?;
+        let add_foreign_key_sql = read_sql_file(format!("{}03-add-foreign-key-todo-list-items.sql", UP_SQL_DIR))?;
+        execute_sql(db, &add_foreign_key_sql).await?;
 
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .get_connection()
-            .execute_unprepared("ALTER TABLE IF EXISTS todo_list_items DROP COLUMN IF EXISTS todo_list_id;")
-            .await?;
-        manager
-            .get_connection()
-            .execute_unprepared("DROP TABLE IF EXISTS todo_list_items")
-            .await?;
+        let db = manager.get_connection();
+
+        let drop_foreign_key_sql = read_sql_file(format!("{}03-drop-foreign-key-todo-list-items.sql", DOWN_SQL_DIR))?;
+        execute_sql(db, &drop_foreign_key_sql).await?;
+
+        let drop_todo_list_items_sql = read_sql_file(format!("{}02-drop-todo-list-items-table.sql", DOWN_SQL_DIR))?;
+        execute_sql(db, &drop_todo_list_items_sql).await?;
 
         Ok(())
     }
