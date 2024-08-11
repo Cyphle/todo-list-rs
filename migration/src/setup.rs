@@ -36,13 +36,6 @@ async fn execute_sql(db: &SchemaManagerConnection<'_>, instruction: &str) -> Res
     db.execute_unprepared(instruction).await.map(|_res| ())
 }
 
-fn find_sql_file(path: &str) -> Result<String, DbErr> {
-    match fs::read_to_string(Path::new(&path)) {
-        Ok(content) => Ok(content),
-        Err(err) => Err(DbErr::Custom(format!("Failed to read file: {}", err))),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::fs::ReadDir;
@@ -68,7 +61,7 @@ mod tests {
         ];
 
         for path in files {
-            assert!(find_sql_file(path).is_ok());
+            assert!(fs::read_to_string(Path::new(&path)).is_ok());
         }
     }
 

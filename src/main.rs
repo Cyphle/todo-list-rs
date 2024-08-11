@@ -1,11 +1,5 @@
-use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
-use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr, EntityTrait};
-use sea_orm::ActiveValue::Set;
-
-use entity::todo_lists;
-use entity::todo_lists::{Entity as TodoLists, Model};
-use migration::{Migrator, MigratorTrait};
-use serde_json::json;
+use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web};
+use sea_orm::{DatabaseConnection};
 
 use crate::db_connection::establish_connection;
 
@@ -24,48 +18,18 @@ async fn echo(req_body: String) -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // SEA ORM
-    // let connection = establish_connection();
-    let db = Database::connect("postgres://postgres:postgres@localhost:5434/todolist").await;
-
-    println!("Bonjour");
-    match db {
-        Ok(db_connection) => {
-            // Insert
-            // let created = todo_lists::ActiveModel::from_json(json!({
-            //     "title": "Hello world"
-            // }));
-            let temp_list = todo_lists::ActiveModel {
-                title: Set("My list".to_owned()),
-                ..Default::default() // all other attributes are `NotSet`
-            };
-            let my_ilist = temp_list.insert(&db_connection).await;
-
-            // Read
-            // Migrator::up(&connection, None).await?; To launch from code see https://www.sea-ql.org/SeaORM/docs/migration/running-migration/
-            let todo_list = TodoLists::find_by_id(1).one(&db_connection).await;
-            match todo_list {
-                Ok(result) => {
-                    match result {
-                        None => {
-                            println!("No result found")
-                        }
-                        Some(res) => {
-                            println!("{:?}", res);
-                        }
-                    }
-                }
-                Err(error) => {
-                    panic!("{:?}", error);
-                }
-            }
+    let connection: DatabaseConnection = match establish_connection().await {
+        Ok(conn) => conn,
+        Err(err) => {
+            eprintln!("Error while connecting to the database : {:?}", err);
+            std::process::exit(1);
         }
-        Err(_) => {}
-    }
-    println!("Au revoir");
+    };
 
     // ACTIX
-    HttpServer::new(|| {
+    HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(connection.clone()))// Use of `.clone()` to duplicate the connection for each Actix thread
             .service(hello)
             .service(echo)
     })
