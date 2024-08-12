@@ -16,3 +16,4 @@ sea-orm = { version = "1.0.0-rc.5", features = [ "sqlx-postgres", "runtime-tokio
 log = "0.4.22"
 serde_json = "1.0.85"
 dotenv = "0.15.0"
+serde = { version = "1.0.204", features = ["derive"] }
