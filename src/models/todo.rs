@@ -9,7 +9,7 @@ pub struct TodoListView {
 
 impl TodoListView {
     pub fn new(todo: todo_lists::Model) -> Self {
-        Self { id: todo.id, title: todo.title }
+        Self { id: Some(todo.id), title: todo.title }
     }
 }
 
