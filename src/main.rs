@@ -1,14 +1,12 @@
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
-use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr, EntityTrait};
+use sea_orm::{ActiveModelTrait, Database, EntityTrait};
 use sea_orm::ActiveValue::Set;
 
 use entity::todo_lists;
-use entity::todo_lists::{Entity as TodoLists, Model};
-use migration::{Migrator, MigratorTrait};
-use serde_json::json;
-
-use crate::db_connection::establish_connection;
-
+use entity::todo_lists::Entity as TodoLists;
+use migration::MigratorTrait;
+mod config;
+use crate::config::database_config;
 mod db_connection;
 
 #[get("/")]
@@ -23,17 +21,10 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // SEA ORM
-    // let connection = establish_connection();
-    let db = Database::connect("postgres://postgres:postgres@localhost:5434/todolist").await;
+    let db = database_config::connect();
 
-    println!("Bonjour");
     match db {
         Ok(db_connection) => {
-            // Insert
-            // let created = todo_lists::ActiveModel::from_json(json!({
-            //     "title": "Hello world"
-            // }));
             let temp_list = todo_lists::ActiveModel {
                 title: Set("My list".to_owned()),
                 ..Default::default() // all other attributes are `NotSet`
