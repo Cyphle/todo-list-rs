@@ -1,1 +1,0 @@
-ALTER TABLE IF EXISTS todo_list_items ADD COLUMN todo_list_id INTEGER NOT NULL REFERENCES todo_lists(id);
