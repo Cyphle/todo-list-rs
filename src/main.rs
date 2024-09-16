@@ -1,13 +1,10 @@
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder};
-use sea_orm::{ActiveModelTrait, Database, EntityTrait};
-use sea_orm::ActiveValue::Set;
+use sea_orm::{EntityTrait};
 
-use entity::todo_lists;
 use entity::todo_lists::Entity as TodoLists;
-use migration::MigratorTrait;
 mod config;
-use crate::config::database_config;
-mod db_connection;
+use config::database_config;
+
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -21,16 +18,10 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let db = database_config::connect();
+    let db = database_config::connect().await;
 
     match db {
         Ok(db_connection) => {
-            let temp_list = todo_lists::ActiveModel {
-                title: Set("My list".to_owned()),
-                ..Default::default() // all other attributes are `NotSet`
-            };
-            let my_ilist = temp_list.insert(&db_connection).await;
-
             // Read
             // Migrator::up(&connection, None).await?; To launch from code see https://www.sea-ql.org/SeaORM/docs/migration/running-migration/
             let todo_list = TodoLists::find_by_id(1).one(&db_connection).await;
@@ -67,10 +58,6 @@ async fn main() -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::test;
-
-    use super::*;
-
     mod actix_tests {
         use actix_web::{App, test};
         use actix_web::http::header::ContentType;

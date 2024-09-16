@@ -1,5 +1,5 @@
-use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr, EntityTrait};
+use sea_orm::{Database, DatabaseConnection, DbErr};
 
-pub fn connect() -> Result<DatabaseConnection, DbErr> {
+pub async fn connect() -> Result<DatabaseConnection, DbErr> {
     Database::connect("postgres://postgres:postgres@localhost:5434/todolist").await
 }

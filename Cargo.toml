@@ -12,6 +12,8 @@ members = [".", "entity", "migration"]
 entity = { path = "entity" }
 migration = { path = "migration" } # depends on your needs
 actix-web = "4"
-sea-orm = { version = "1.0.0-rc.5", features = [ "sqlx-postgres", "runtime-tokio-native-tls", "macros" ] }
+sea-orm = { version = "1.0.0-rc.5", features = [ "sqlx-postgres", "runtime-tokio-native-tls", "macros", "mock" ] }
 log = "0.4.22"
 serde_json = "1.0.85"
+dotenv = "0.15.0"
+serde = { version = "1.0.204", features = ["derive"] }
