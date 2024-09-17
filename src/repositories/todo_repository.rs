@@ -1,8 +1,7 @@
-mod sea_orm;
 use sea_orm::{DatabaseConnection, DbErr, ActiveModelTrait, EntityTrait};
 use entity::todo_lists;
 use sea_orm::ActiveValue::Set;
-use crate::models::todo::TodoList;
+use crate::TodoLists;
 
 pub struct TodoListRepository {
     db: DatabaseConnection,
@@ -13,7 +12,7 @@ impl TodoListRepository {
         TodoListRepository { db }
     }
 
-    pub async fn save(&self, todo: TodoList) -> Result<(), DbErr> {
+    pub async fn save(&self, todo: TodoLists) -> Result<(), DbErr> {
         let new_todo = todo_lists::ActiveModel {
             id: Default::default(),
             title: Set(todo.title),
