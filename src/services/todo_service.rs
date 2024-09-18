@@ -5,6 +5,7 @@ pub struct TodoListService {
     repository: TodoListRepository,
 }
 
+// TODO to be deleted. stop l'objet quoi. C'est pour utiliser les AppState extractor d'actix. A voir l'utilité...
 impl TodoListService {
     pub fn new(repository: TodoListRepository) -> Self {
         TodoListService { repository }

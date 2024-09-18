@@ -1,6 +1,7 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
 use crate::services::todo_service::TodoListService;
 use crate::models::todo::TodoListView;
+
 #[get("/todos")]
 async fn get_todos(service: web::Data<TodoListService>) -> impl Responder {
     match service.get_all_todos().await {

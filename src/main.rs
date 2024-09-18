@@ -4,6 +4,9 @@ use sea_orm::{EntityTrait};
 use entity::todo_lists::Entity as TodoLists;
 mod config;
 mod repositories;
+mod handlers;
+mod services;
+mod models;
 
 use config::database_config;
 
@@ -24,6 +27,14 @@ async fn main() -> std::io::Result<()> {
 
     match db {
         Ok(db_connection) => {
+            // Write
+            /*
+            let temp_list = todo_lists::ActiveModel {
+                title: Set("My list".to_owned()),
+                ..Default::default() // all other attributes are `NotSet`
+            };
+            let my_ilist = temp_list.insert(&db_connection).await;
+             */
             // Read
             // Migrator::up(&connection, None).await?; To launch from code see https://www.sea-ql.org/SeaORM/docs/migration/running-migration/
             let todo_list = TodoLists::find_by_id(1).one(&db_connection).await;
@@ -64,45 +75,6 @@ mod tests {
         entity::prelude::*, entity::*,
         DatabaseBackend, MockDatabase, Transaction,
     };
-
-    #[async_std::test]
-    async fn test_find_cake() -> Result<(), DbErr> {
-        // Create MockDatabase with mock query results
-        let db: &DatabaseConnection = &MockDatabase::new(DatabaseBackend::Postgres)
-            .append_query_results([
-                // First query result
-                vec![bakery::Model {
-                    id: 1,
-                    name: "Happy Bakery".to_owned(),
-                    profit_margin: 0.0,
-                }],
-            ])
-            .into_connection();
-
-        // Find a cake from MockDatabase
-        // Return the first query result
-        assert_eq!(
-            cake::Entity::find().one(&db).await?,
-            Some(cake::Model {
-                id: 1,
-                name: "New York Cheese".to_owned(),
-            })
-        );
-
-        // Checking transaction log
-        assert_eq!(
-            db.into_transaction_log(),
-            [
-                Transaction::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    r#"SELECT "cake"."id", "cake"."name" FROM "cake" LIMIT $1"#,
-                    [1u64.into()]
-                )
-            ]
-        );
-
-        Ok(())
-    }
 
     mod actix_tests {
         use actix_web::{App, test};
