@@ -54,7 +54,9 @@ async fn main() -> std::io::Result<()> {
                 }
             }
         }
-        Err(_) => {}
+        Err(_) => {
+            println!("Error connecting to the database");
+        }
     }
     println!("Au revoir");
 
