@@ -46,75 +46,59 @@ mod tests {
         }
     }
 
-    // mod todo_lists_write {
-    //     use sea_orm::{
-    //         entity::prelude::*, entity::*, tests_cfg::*,
-    //         DatabaseBackend, MockDatabase, MockExecResult, Transaction,
-    //     };
-    //
-    //     #[async_std::test]
-    //     async fn test_insert_cake() -> Result<(), DbErr> {
-    //         // Create MockDatabase with mock execution result
-    //         let db = MockDatabase::new(DatabaseBackend::Postgres)
-    //             .append_query_results([
-    //                 [cake::Model {
-    //                     id: 15,
-    //                     name: "Apple Pie".to_owned(),
-    //                 }],
-    //                 [cake::Model {
-    //                     id: 16,
-    //                     name: "Apple Pie".to_owned(),
-    //                 }],
-    //             ])
-    //             .append_exec_results([
-    //                 MockExecResult {
-    //                     last_insert_id: 15,
-    //                     rows_affected: 1,
-    //                 },
-    //                 MockExecResult {
-    //                     last_insert_id: 16,
-    //                     rows_affected: 1,
-    //                 },
-    //             ])
-    //             .into_connection();
-    //
-    //         // Prepare the ActiveModel
-    //         let apple = cake::ActiveModel {
-    //             name: Set("Apple Pie".to_owned()),
-    //             ..Default::default()
-    //         };
-    //
-    //         // Insert the ActiveModel into MockDatabase
-    //         assert_eq!(
-    //             apple.clone().insert(&db).await?,
-    //             cake::Model {
-    //                 id: 15,
-    //                 name: "Apple Pie".to_owned()
-    //             }
-    //         );
-    //
-    //         // If you want to check the last insert id
-    //         let insert_result = cake::Entity::insert(apple).exec(&db).await?;
-    //         assert_eq!(insert_result.last_insert_id, 16);
-    //
-    //         // Checking transaction log
-    //         assert_eq!(
-    //             db.into_transaction_log(),
-    //             [
-    //                 Transaction::from_sql_and_values(
-    //                     DatabaseBackend::Postgres,
-    //                     r#"INSERT INTO "cake" ("name") VALUES ($1) RETURNING "id", "name""#,
-    //                     ["Apple Pie".into()]
-    //                 ),
-    //                 Transaction::from_sql_and_values(
-    //                     DatabaseBackend::Postgres,
-    //                     r#"INSERT INTO "cake" ("name") VALUES ($1) RETURNING "id""#,
-    //                     ["Apple Pie".into()]
-    //                 ),
-    //             ]
-    //         );
-    //
-    //         Ok(())
-    //     }
-    // }
+    mod todo_lists_write {
+        use sea_orm::{
+            entity::prelude::*, entity::*,
+            DatabaseBackend, MockDatabase, MockExecResult, Transaction,
+        };
+
+        #[async_std::test]
+        async fn test_insert_todo_lists() -> Result<(), DbErr> {
+            // Create MockDatabase with mock execution result
+            let db = MockDatabase::new(DatabaseBackend::Postgres)
+                .append_query_results([
+                    [entity::todo_lists::Model {
+                        id: 15,
+                        title: "Apple Pie".to_owned(),
+                    }],
+                ])
+                .append_exec_results([
+                    MockExecResult {
+                        last_insert_id: 15,
+                        rows_affected: 1,
+                    },
+                ])
+                .into_connection();
+
+            // Prepare the ActiveModel
+            let apple = entity::todo_lists::ActiveModel {
+                title: Set("Apple Pie".to_owned()),
+                ..Default::default()
+            };
+
+            // Insert the ActiveModel into MockDatabase
+            let inserted = apple.clone().insert(&db).await?;
+            assert_eq!(
+                inserted,
+                entity::todo_lists::Model {
+                    id: 15,
+                    title: "Apple Pie".to_owned()
+                }
+            );
+
+            // Checking transaction log
+            assert_eq!(
+                db.into_transaction_log(),
+                [
+                    Transaction::from_sql_and_values(
+                        DatabaseBackend::Postgres,
+                        r#"INSERT INTO "todo_lists" ("title") VALUES ($1) RETURNING "id", "title""#,
+                        ["Apple Pie".into()]
+                    ),
+                ]
+            );
+
+            Ok(())
+        }
+    }
 }
