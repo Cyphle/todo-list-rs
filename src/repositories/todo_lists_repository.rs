@@ -1,4 +1,10 @@
 
+// TODO ces tests sont OK. A faire: au lieu de tester les entités direct, il faut tester les méthodes proxy qui seront du genre
+/*
+    pub fn create(todo_list: CreateTodoListCommand) -> TodoList {
+        // blabla
+    }
+ */
 #[cfg(test)]
 mod tests {
     mod todo_lists_read {
