@@ -1,8 +1,8 @@
-use actix_web::{get, post, HttpResponse, Responder};
 use crate::repositories;
+use actix_web::{get, HttpResponse, Responder};
 
 // TODO test these handlers
-// TODO il faudrait de la curyfication pour pouvoir injecter la connexion à la base. Et on pourra faire get_todos(&connexion) dans la config actix
+// TODO il faut utiliser les states pour injecter la connexion (https://actix.rs/docs/application)
 #[get("/todo_lists")]
 async fn get_todos() -> impl Responder {
     match repositories::todo_lists_repository::find_all().await {
