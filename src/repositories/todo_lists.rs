@@ -1,8 +1,8 @@
+use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
+use crate::dto::views::todo_list::TodoListView;
+use entity::todo_lists::Entity as TodoLists;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr, EntityTrait};
-use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
-use entity::todo_lists::Entity as TodoLists;
-use crate::dto::views::todo_list::TodoListView;
 
 pub async fn create(db_connexion: &DatabaseConnection, command: CreateTodoListCommand) -> Result<TodoList, DbErr> {
     let model = entity::todo_lists::ActiveModel {
@@ -45,12 +45,10 @@ pub async fn find_all(db_connexion: &DatabaseConnection) -> Result<Vec<TodoListV
 mod tests {
     mod read {
         use sea_orm::{DatabaseBackend, DbErr, MockDatabase, Transaction};
-        use sea_orm::{EntityTrait};
+        use sea_orm::EntityTrait;
 
-        use entity::todo_lists::Entity as TodoLists;
-        use crate::domain::todo_list::TodoList;
         use crate::dto::views::todo_list::TodoListView;
-        use crate::repositories::todo_lists_repository::{find_all, find_one_by_id};
+        use crate::repositories::todo_lists::{find_all, find_one_by_id};
 
         #[async_std::test]
         async fn should_find_one_by_id() -> Result<(), DbErr> {
@@ -138,12 +136,12 @@ mod tests {
     }
 
     mod create {
+        use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
+        use crate::repositories::todo_lists::create;
         use sea_orm::{
             entity::prelude::*, entity::*,
             DatabaseBackend, MockDatabase, MockExecResult, Transaction,
         };
-        use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
-        use crate::repositories::todo_lists_repository::create;
 
         #[async_std::test]
         async fn should_create_todo_list() -> Result<(), DbErr> {

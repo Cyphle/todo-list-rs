@@ -1,1 +1,1 @@
-pub mod todo_lists_repository;
+pub mod todo_lists;
