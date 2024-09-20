@@ -2,6 +2,7 @@ use crate::http::handlers::state::HandlerState;
 use crate::repositories;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use crate::domain::todo_list::CreateTodoListCommand;
+use crate::dto::requests::todo_lists::CreateTodoListRequest;
 
 #[get("/todo_lists")]
 async fn get_todo_lists(state: web::Data<HandlerState>) -> impl Responder {
@@ -21,11 +22,11 @@ async fn get_todo_list_by_id(path: web::Path<i32>, state: web::Data<HandlerState
 }
 
 #[post("/todo_lists")]
-async fn create_todo_list(state: web::Data<HandlerState>, payload: web::Json<String>) -> impl Responder {
+async fn create_todo_list(payload: web::Json<CreateTodoListRequest>, state: web::Data<HandlerState>) -> impl Responder {
     match repositories::todo_lists::create(
         &state.db_connexion,
         CreateTodoListCommand {
-            title: payload.into_inner(),
+            title: payload.into_inner().title.to_owned(),
         },
     ).await {
         Ok(_) => HttpResponse::Created().finish(),
@@ -40,7 +41,7 @@ mod tests {
     use sea_orm::{DatabaseBackend, DatabaseConnection, MockDatabase};
     use crate::{echo, hello};
     use crate::http::handlers::state::HandlerState;
-    use crate::http::handlers::todo_lists::{get_todo_list_by_id, get_todo_lists};
+    use crate::http::handlers::todo_lists::{create_todo_list, get_todo_list_by_id, get_todo_lists};
     use actix_web::{get, post, web, HttpResponse, Responder};
 
     fn get_mock_database() -> DatabaseConnection {
@@ -87,6 +88,25 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
 
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn should_create_todo_list() {
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(HandlerState {
+                    db_connexion: get_mock_database()
+                }))
+                .service(create_todo_list)
+        ).await;
+
+        let req = test::TestRequest::post()
+            .set_payload("{ \"title\": \"Bonjour\" }")
+            .insert_header(ContentType::json())
+            .uri("/todo_lists").to_request();
+
+        let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
     }
 

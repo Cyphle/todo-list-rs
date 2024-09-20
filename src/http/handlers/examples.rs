@@ -1,13 +1,18 @@
-use actix_web::{get, post, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse, Responder};
 
 #[get("/hello")]
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
 
+#[derive(serde::Deserialize)]
+struct Test {
+    key: String
+}
+
 #[post("/echo")]
-pub async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
+pub async fn echo(req_body: web::Json<Test>) -> impl Responder {
+    HttpResponse::Ok().body("Bonjour")
 }
 
 #[cfg(test)]
@@ -35,7 +40,11 @@ mod tests {
         #[actix_web::test]
         async fn test_echo_post() {
             let app = test::init_service(App::new().service(echo)).await;
-            let req = test::TestRequest::post().uri("/echo").to_request();
+            let req = test::TestRequest::post()
+                .set_payload("{ \"key\": \"Bonjour\" }")
+                .insert_header(ContentType::json())
+                .uri("/echo")
+                .to_request();
             let resp = test::call_service(&app, req).await;
             assert!(resp.status().is_success());
         }
