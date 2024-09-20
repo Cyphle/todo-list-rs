@@ -14,7 +14,6 @@ pub async fn echo(req_body: String) -> impl Responder {
 mod tests {
     use sea_orm::{
         entity::prelude::*, entity::*
-        ,
     };
 
     mod actix_tests {

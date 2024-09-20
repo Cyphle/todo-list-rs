@@ -1,3 +1,2 @@
-pub mod todo_handlers;
-
 pub mod examples;
+pub mod todo_lists;
