@@ -25,6 +25,21 @@ pub async fn find_one_by_id(db_connexion: &DatabaseConnection, id: i32) -> Resul
         }))
 }
 
+pub async fn find_all(db_connexion: &DatabaseConnection) -> Result<Vec<TodoList>, DbErr> {
+    TodoLists::find()
+        .all(db_connexion)
+        .await
+        .map(|models| {
+            models
+                .into_iter()
+                .map(|m| TodoList {
+                    id: m.id,
+                    title: m.title,
+                })
+                .collect()
+        })
+}
+
 #[cfg(test)]
 mod tests {
     mod read {
@@ -33,7 +48,7 @@ mod tests {
 
         use entity::todo_lists::Entity as TodoLists;
         use crate::domain::todo_list::TodoList;
-        use crate::repositories::todo_lists_repository::find_one_by_id;
+        use crate::repositories::todo_lists_repository::{find_all, find_one_by_id};
 
         #[async_std::test]
         async fn should_find_one_by_id() -> Result<(), DbErr> {
@@ -71,6 +86,53 @@ mod tests {
             Ok(())
         }
 
+        #[async_std::test]
+        async fn should_find_all() -> Result<(), DbErr> {
+            let db = MockDatabase::new(DatabaseBackend::Postgres)
+                .append_query_results([
+                    vec![
+                        entity::todo_lists::Model {
+                            id: 1,
+                            title: "New York Cheese".to_owned(),
+                        },
+                        entity::todo_lists::Model {
+                            id: 2,
+                            title: "Apple Pie".to_owned(),
+                        },
+                    ],
+                ])
+                .into_connection();
+
+            let found = find_all(&db).await?;
+
+            assert_eq!(
+                found,
+                vec![
+                    TodoList {
+                        id: 1,
+                        title: "New York Cheese".to_owned(),
+                    },
+                    TodoList {
+                        id: 2,
+                        title: "Apple Pie".to_owned(),
+                    },
+                ]
+            );
+
+            // Checking transaction log
+            assert_eq!(
+                db.into_transaction_log(),
+                [
+                    Transaction::from_sql_and_values(
+                        DatabaseBackend::Postgres,
+                        r#"SELECT "todo_lists"."id", "todo_lists"."title" FROM "todo_lists""#,
+                        [],
+                    ),
+                ]
+            );
+
+            Ok(())
+        }
     }
 
     mod create {
