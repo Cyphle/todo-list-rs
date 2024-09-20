@@ -44,8 +44,8 @@ pub async fn find_all(db_connexion: &DatabaseConnection) -> Result<Vec<TodoListV
 #[cfg(test)]
 mod tests {
     mod read {
-        use sea_orm::{DatabaseBackend, DbErr, MockDatabase, Transaction};
         use sea_orm::EntityTrait;
+        use sea_orm::{DatabaseBackend, DbErr, MockDatabase, Transaction};
 
         use crate::dto::views::todo_list::TodoListView;
         use crate::repositories::todo_lists::{find_all, find_one_by_id};

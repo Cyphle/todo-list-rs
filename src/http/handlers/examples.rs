@@ -11,7 +11,7 @@ struct Test {
 }
 
 #[post("/echo")]
-pub async fn echo(req_body: web::Json<Test>) -> impl Responder {
+pub async fn echo(_: web::Json<Test>) -> impl Responder {
     HttpResponse::Ok().body("Bonjour")
 }
 

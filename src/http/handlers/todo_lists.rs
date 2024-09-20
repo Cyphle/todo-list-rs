@@ -6,7 +6,7 @@ use crate::dto::requests::todo_lists::CreateTodoListRequest;
 
 #[get("/todo_lists")]
 async fn get_todo_lists(state: web::Data<HandlerState>) -> impl Responder {
-    match repositories::todo_lists::find_all(&state.db_connexion).await {
+    match repositories::todo_lists::find_all(&state.db_connection).await {
         Ok(todos) => HttpResponse::Ok().json(todos),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
@@ -14,7 +14,7 @@ async fn get_todo_lists(state: web::Data<HandlerState>) -> impl Responder {
 
 #[get("/todo_lists/{id}")]
 async fn get_todo_list_by_id(path: web::Path<i32>, state: web::Data<HandlerState>) -> impl Responder {
-    match repositories::todo_lists::find_one_by_id(&state.db_connexion, path.into_inner()).await {
+    match repositories::todo_lists::find_one_by_id(&state.db_connection, path.into_inner()).await {
         Ok(Some(todo)) => HttpResponse::Ok().json(todo),
         Ok(None) => HttpResponse::NotFound().body("Todo not found"),
         Err(_) => HttpResponse::InternalServerError().finish(),
@@ -24,7 +24,7 @@ async fn get_todo_list_by_id(path: web::Path<i32>, state: web::Data<HandlerState
 #[post("/todo_lists")]
 async fn create_todo_list(payload: web::Json<CreateTodoListRequest>, state: web::Data<HandlerState>) -> impl Responder {
     match repositories::todo_lists::create(
-        &state.db_connexion,
+        &state.db_connection,
         CreateTodoListCommand {
             title: payload.into_inner().title.to_owned(),
         },
@@ -60,7 +60,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(HandlerState {
-                    db_connexion: get_mock_database()
+                    db_connection: get_mock_database()
                 }))
                 .service(get_todo_lists)
         ).await;
@@ -78,7 +78,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(HandlerState {
-                    db_connexion: get_mock_database()
+                    db_connection: get_mock_database()
                 }))
                 .service(get_todo_list_by_id)
         ).await;
@@ -96,7 +96,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(HandlerState {
-                    db_connexion: get_mock_database()
+                    db_connection: get_mock_database()
                 }))
                 .service(create_todo_list)
         ).await;
@@ -108,24 +108,5 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
-    }
-
-    mod actix_tests {
-
-        // #[actix_web::test]
-        // async fn test_echo_post() {
-        //     let app = test::init_service(App::new().service(echo)).await;
-        //     let req = test::TestRequest::post().uri("/echo").to_request();
-        //     let resp = test::call_service(&app, req).await;
-        //     assert!(resp.status().is_success());
-        // }
-        //
-        // #[actix_web::test]
-        // async fn test_echo_post_error() {
-        //     let app = test::init_service(App::new().service(echo)).await;
-        //     let req = test::TestRequest::post().uri("/").to_request();
-        //     let resp = test::call_service(&app, req).await;
-        //     assert!(resp.status().is_client_error());
-        // }
     }
 }
