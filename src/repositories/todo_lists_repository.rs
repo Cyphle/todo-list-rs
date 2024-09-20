@@ -1,10 +1,19 @@
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr};
+use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
 
-// TODO ces tests sont OK. A faire: au lieu de tester les entités direct, il faut tester les méthodes proxy qui seront du genre
-/*
-    pub fn create(todo_list: CreateTodoListCommand) -> TodoList {
-        // blabla
-    }
- */
+pub async fn create(db_connexion: &DatabaseConnection, command: CreateTodoListCommand) -> Result<TodoList, DbErr> {
+    let model = entity::todo_lists::ActiveModel {
+        title: Set(command.title.to_owned()),
+        ..Default::default()
+    };
+
+    model.clone().insert(db_connexion).await.map(|m| TodoList {
+        id: m.id,
+        title: m.title
+    })
+}
+
 #[cfg(test)]
 mod tests {
     mod todo_lists_read {
@@ -14,7 +23,7 @@ mod tests {
         use entity::todo_lists::Entity as TodoLists;
 
         #[async_std::test]
-        async fn test() -> Result<(), DbErr> {
+        async fn test_example() -> Result<(), DbErr> {
             // Create MockDatabase with mock query results
             let db = MockDatabase::new(DatabaseBackend::Postgres)
                 .append_query_results([
@@ -57,10 +66,11 @@ mod tests {
             entity::prelude::*, entity::*,
             DatabaseBackend, MockDatabase, MockExecResult, Transaction,
         };
+        use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
+        use crate::repositories::todo_lists_repository::create;
 
         #[async_std::test]
-        async fn test_insert_todo_lists() -> Result<(), DbErr> {
-            // Create MockDatabase with mock execution result
+        async fn should_create_todo_list() -> Result<(), DbErr> {
             let db = MockDatabase::new(DatabaseBackend::Postgres)
                 .append_query_results([
                     [entity::todo_lists::Model {
@@ -77,22 +87,18 @@ mod tests {
                 .into_connection();
 
             // Prepare the ActiveModel
-            let apple = entity::todo_lists::ActiveModel {
-                title: Set("Apple Pie".to_owned()),
-                ..Default::default()
-            };
+            let created = create(&db, CreateTodoListCommand {
+                title: "Apple Pie".to_string()
+            }).await;
 
-            // Insert the ActiveModel into MockDatabase
-            let inserted = apple.clone().insert(&db).await?;
             assert_eq!(
-                inserted,
-                entity::todo_lists::Model {
+                created.unwrap(),
+                TodoList {
                     id: 15,
                     title: "Apple Pie".to_owned()
                 }
             );
 
-            // Checking transaction log
             assert_eq!(
                 db.into_transaction_log(),
                 [

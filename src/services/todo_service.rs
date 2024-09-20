@@ -1,4 +1,3 @@
-use crate::models::todo::{TodoList, TodoListView};
 use crate::repositories::todo_repository::TodoListRepository;
 
 pub struct TodoListService {

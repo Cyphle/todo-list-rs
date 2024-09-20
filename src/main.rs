@@ -4,9 +4,9 @@ use sea_orm::{EntityTrait};
 use entity::todo_lists::Entity as TodoLists;
 mod config;
 mod repositories;
-mod handlers;
 mod services;
-mod models;
+mod dto;
+mod domain;
 
 use config::database_config;
 
