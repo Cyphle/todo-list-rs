@@ -1,6 +1,7 @@
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr, EntityTrait};
 use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
+use entity::todo_lists::Entity as TodoLists;
 
 pub async fn create(db_connexion: &DatabaseConnection, command: CreateTodoListCommand) -> Result<TodoList, DbErr> {
     let model = entity::todo_lists::ActiveModel {
@@ -10,24 +11,34 @@ pub async fn create(db_connexion: &DatabaseConnection, command: CreateTodoListCo
 
     model.clone().insert(db_connexion).await.map(|m| TodoList {
         id: m.id,
-        title: m.title
+        title: m.title,
     })
+}
+
+pub async fn find_one_by_id(db_connexion: &DatabaseConnection, id: i32) -> Result<Option<TodoList>, DbErr> {
+    TodoLists::find_by_id(id)
+        .one(db_connexion)
+        .await
+        .map(|m| m.map(|m| TodoList {
+            id: m.id,
+            title: m.title,
+        }))
 }
 
 #[cfg(test)]
 mod tests {
-    mod todo_lists_read {
+    mod read {
         use sea_orm::{DatabaseBackend, DbErr, MockDatabase, Transaction};
         use sea_orm::{EntityTrait};
 
         use entity::todo_lists::Entity as TodoLists;
+        use crate::domain::todo_list::TodoList;
+        use crate::repositories::todo_lists_repository::find_one_by_id;
 
         #[async_std::test]
-        async fn test_example() -> Result<(), DbErr> {
-            // Create MockDatabase with mock query results
+        async fn should_find_one_by_id() -> Result<(), DbErr> {
             let db = MockDatabase::new(DatabaseBackend::Postgres)
                 .append_query_results([
-                    // First query result
                     vec![entity::todo_lists::Model {
                         id: 1,
                         title: "New York Cheese".to_owned(),
@@ -35,11 +46,11 @@ mod tests {
                 ])
                 .into_connection();
 
-            // Find a cake from MockDatabase
-            // Return the first query result
+            let found = find_one_by_id(&db, 1).await?;
+
             assert_eq!(
-                TodoLists::find_by_id(1).one(&db).await?,
-                Some(entity::todo_lists::Model {
+                found,
+                Some(TodoList {
                     id: 1,
                     title: "New York Cheese".to_owned(),
                 })
@@ -59,9 +70,10 @@ mod tests {
 
             Ok(())
         }
+
     }
 
-    mod todo_lists_write {
+    mod create {
         use sea_orm::{
             entity::prelude::*, entity::*,
             DatabaseBackend, MockDatabase, MockExecResult, Transaction,
