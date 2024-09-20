@@ -2,6 +2,7 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr, EntityTrait};
 use crate::domain::todo_list::{CreateTodoListCommand, TodoList};
 use entity::todo_lists::Entity as TodoLists;
+use crate::dto::views::todo_list::TodoListView;
 
 pub async fn create(db_connexion: &DatabaseConnection, command: CreateTodoListCommand) -> Result<TodoList, DbErr> {
     let model = entity::todo_lists::ActiveModel {
@@ -25,14 +26,14 @@ pub async fn find_one_by_id(db_connexion: &DatabaseConnection, id: i32) -> Resul
         }))
 }
 
-pub async fn find_all(db_connexion: &DatabaseConnection) -> Result<Vec<TodoList>, DbErr> {
+pub async fn find_all(db_connexion: &DatabaseConnection) -> Result<Vec<TodoListView>, DbErr> {
     TodoLists::find()
         .all(db_connexion)
         .await
         .map(|models| {
             models
                 .into_iter()
-                .map(|m| TodoList {
+                .map(|m| TodoListView {
                     id: m.id,
                     title: m.title,
                 })
@@ -48,6 +49,7 @@ mod tests {
 
         use entity::todo_lists::Entity as TodoLists;
         use crate::domain::todo_list::TodoList;
+        use crate::dto::views::todo_list::TodoListView;
         use crate::repositories::todo_lists_repository::{find_all, find_one_by_id};
 
         #[async_std::test]
@@ -108,11 +110,11 @@ mod tests {
             assert_eq!(
                 found,
                 vec![
-                    TodoList {
+                    TodoListView {
                         id: 1,
                         title: "New York Cheese".to_owned(),
                     },
-                    TodoList {
+                    TodoListView {
                         id: 2,
                         title: "Apple Pie".to_owned(),
                     },
