@@ -16,11 +16,11 @@ pub async fn create(db_connexion: &DatabaseConnection, command: CreateTodoListCo
     })
 }
 
-pub async fn find_one_by_id(db_connexion: &DatabaseConnection, id: i32) -> Result<Option<TodoList>, DbErr> {
+pub async fn find_one_by_id(db_connexion: &DatabaseConnection, id: i32) -> Result<Option<TodoListView>, DbErr> {
     TodoLists::find_by_id(id)
         .one(db_connexion)
         .await
-        .map(|m| m.map(|m| TodoList {
+        .map(|m| m.map(|m| TodoListView {
             id: m.id,
             title: m.title,
         }))
@@ -67,7 +67,7 @@ mod tests {
 
             assert_eq!(
                 found,
-                Some(TodoList {
+                Some(TodoListView {
                     id: 1,
                     title: "New York Cheese".to_owned(),
                 })
