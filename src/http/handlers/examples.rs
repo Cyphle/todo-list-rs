@@ -25,7 +25,7 @@ mod tests {
         #[actix_web::test]
         async fn test_hello_get() {
             let app = test::init_service(App::new().service(hello)).await;
-            let req = test::TestRequest::default()
+            let req = test::TestRequest::get().uri("/hello")
                 .insert_header(ContentType::plaintext())
                 .to_request();
             let resp = test::call_service(&app, req).await;

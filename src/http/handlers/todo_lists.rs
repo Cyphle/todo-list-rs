@@ -3,7 +3,6 @@ use crate::repositories;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use crate::domain::todo_list::CreateTodoListCommand;
 
-// TODO test these handlers
 #[get("/todo_lists")]
 async fn get_todo_lists(state: web::Data<HandlerState>) -> impl Responder {
     match repositories::todo_lists::find_all(&state.db_connexion).await {
@@ -38,14 +37,33 @@ async fn create_todo_list(state: web::Data<HandlerState>, payload: web::Json<Str
 mod tests {
     use actix_web::http::header::ContentType;
     use actix_web::{test, App};
-
+    use sea_orm::{DatabaseBackend, DatabaseConnection, MockDatabase};
     use crate::{echo, hello};
+    use crate::http::handlers::state::HandlerState;
     use crate::http::handlers::todo_lists::get_todo_lists;
+    use actix_web::{get, post, web, HttpResponse, Responder};
+
+    fn get_mock_database() -> DatabaseConnection {
+        MockDatabase::new(DatabaseBackend::Postgres)
+            .append_query_results([
+                vec![entity::todo_lists::Model {
+                    id: 1,
+                    title: "New York Cheese".to_owned(),
+                }],
+            ])
+            .into_connection()
+    }
 
     #[actix_web::test]
     async fn should_get_todo_lists() {
-        let app = test::init_service(App::new().service(get_todo_lists)).await;
-        let req = test::TestRequest::default()
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(HandlerState {
+                    db_connexion: get_mock_database()
+                }))
+                .service(get_todo_lists)
+        ).await;
+        let req = test::TestRequest::get().uri("/todo_lists")
             .insert_header(ContentType::plaintext())
             .to_request();
 
