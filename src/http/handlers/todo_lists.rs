@@ -40,7 +40,7 @@ mod tests {
     use sea_orm::{DatabaseBackend, DatabaseConnection, MockDatabase};
     use crate::{echo, hello};
     use crate::http::handlers::state::HandlerState;
-    use crate::http::handlers::todo_lists::get_todo_lists;
+    use crate::http::handlers::todo_lists::{get_todo_list_by_id, get_todo_lists};
     use actix_web::{get, post, web, HttpResponse, Responder};
 
     fn get_mock_database() -> DatabaseConnection {
@@ -64,6 +64,24 @@ mod tests {
                 .service(get_todo_lists)
         ).await;
         let req = test::TestRequest::get().uri("/todo_lists")
+            .insert_header(ContentType::plaintext())
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn should_get_one_todo_list_by_id() {
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(HandlerState {
+                    db_connexion: get_mock_database()
+                }))
+                .service(get_todo_list_by_id)
+        ).await;
+        let req = test::TestRequest::get().uri("/todo_lists/123")
             .insert_header(ContentType::plaintext())
             .to_request();
 
