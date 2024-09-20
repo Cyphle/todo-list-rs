@@ -2,5 +2,5 @@ use sea_orm::DatabaseConnection;
 
 
 pub struct HandlerState {
-    pub db_connection: DatabaseConnection
+    pub db_connection: &'static DatabaseConnection
 }

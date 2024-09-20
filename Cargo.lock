@@ -3115,6 +3115,7 @@ dependencies = [
  "entity",
  "log",
  "migration",
+ "rand",
  "sea-orm",
  "serde",
  "serde_json",

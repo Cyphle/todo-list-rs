@@ -44,15 +44,15 @@ mod tests {
     use crate::http::handlers::todo_lists::{create_todo_list, get_todo_list_by_id, get_todo_lists};
     use actix_web::{get, post, web, HttpResponse, Responder};
 
-    fn get_mock_database() -> DatabaseConnection {
-        MockDatabase::new(DatabaseBackend::Postgres)
+    fn get_mock_database() -> &'static DatabaseConnection {
+        Box::leak(Box::new(MockDatabase::new(DatabaseBackend::Postgres)
             .append_query_results([
                 vec![entity::todo_lists::Model {
                     id: 1,
                     title: "New York Cheese".to_owned(),
                 }],
             ])
-            .into_connection()
+            .into_connection()))
     }
 
     #[actix_web::test]
